@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MeTify</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="icon" type="image/png" href="/static/favicon/favicon-96x96.png" sizes="96x96" />
+
+    <link rel="icon" type="image/svg+xml" href="/static/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/static/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/favicon/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="MeTify" />
+    <link rel="manifest" href="/static/favicon/site.webmanifest" />
+</head>
+
+<body>
+    <main class="container">
+        <section class="hero">
+            <div>
+                <h1>MeTify</h1>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>New download</h2>
+            <form id="downloadForm" class="grid">
+                <label class="full">Spotify URL
+                    <input name="url" type="url" placeholder="Enter a Track, Album or Playlist URL" required>
+                </label>
+
+                <label>Audio source
+                    <select name="audio" multiple size="5">
+                        <option value="youtube" selected>youtube</option>
+                        <option value="youtube-music" selected>youtube-music</option>
+                        <option value="soundcloud">soundcloud</option>
+                        <option value="bandcamp">bandcamp</option>
+                        <option value="piped">piped</option>
+                    </select>
+                    <small>Hold CTRL for multiple options.</small>
+                </label>
+
+                <label>Lyrics
+                    <select name="lyrics" multiple size="4">
+                        <option value="genius">genius</option>
+                        <option value="musixmatch">musixmatch</option>
+                        <option value="azlyrics">azlyrics</option>
+                        <option value="synced">synced</option>
+                    </select>
+                </label>
+
+                <label>Max retries
+                    <input name="max_retries" type="number" min="0" value="4">
+                </label>
+
+                <label>Threads
+                    <input name="max_threads" type="number" min="0" value="1">
+                </label>
+
+                <label>Bitrate
+                    <select name="bitrate">
+                    <option>auto</option>
+                    <option>128k</option>
+                    <option>256k</option>
+                    <option selected>320k</option>
+                    </select>
+                </label>
+
+                <label>Format
+                    <select name="format">
+                    <option>mp3</option>
+                    <option>flac</option>
+                    <option>m4a</option>
+                    <option>wav</option>
+                    </select>
+                </label>
+
+                <button class="full" type="submit">Start download</button>
+            </form>
+            <p id="message" class="message"></p>
+        </section>
+
+        <br>
+
+        <section class="columns">
+            <div class="card">
+                <h2>Jobs</h2>
+                <div id="jobs" class="list"></div>
+            </div>
+            <div class="card">
+                <h2>Downloaded files</h2>
+                <div id="files" class="list"></div>
+            </div>
+        </section>
+    </main>
+    <script src="/scripts/javascript/app.js"></script>
+</body>
+</html>
