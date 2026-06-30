@@ -220,6 +220,9 @@ select.multi-select-source {
   border: 1px solid var(--border);
   border-radius: 5px;
   background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .multi-select__option.selected .multi-select__checkbox {
