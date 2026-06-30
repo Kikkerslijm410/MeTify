@@ -286,3 +286,26 @@ setTimeout(() => {
         el.scrollTop = el.scrollHeight;
     });
 }, 100);
+
+
+const btn = document.getElementById('theme-toggle');
+const icon = btn.querySelector('i');
+let isLight = localStorage.getItem('theme') === 'dark';
+
+applyTheme();
+
+btn.addEventListener('click', () => {
+    isLight = !isLight;
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    applyTheme();
+});
+
+function applyTheme() {
+    if (isLight) {
+        document.body.classList.add('light-mode');
+        icon.className = 'fa-solid fa-sun';
+    } else {
+        document.body.classList.remove('light-mode');
+        icon.className = 'fa-solid fa-moon';
+    }
+}
