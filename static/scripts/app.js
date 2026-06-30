@@ -127,8 +127,7 @@ async function createJob(e){
     }
 }
 
-const render = (el, data, empty, fn) =>
-    el.innerHTML = data.length ? data.map(fn).join('') : empty;
+const render = (el, data, empty, fn) => el.innerHTML = data.length ? data.map(fn).join('') : empty;
 
 function renderJobs(jobs){
     render(jobsEl, jobs, '<div class="item muted">No jobs.</div>', j => `
@@ -187,17 +186,16 @@ const deleteFile = async name => {
     refresh();
 };
 
-async function refresh(){
-    const [jobs, files] = await Promise.all([api('/api/jobs'), api('/api/downloads')]);
+async function refresh() {
+    const jobs = await api('/api/jobs');
     renderJobs(jobs);
-    renderFiles(files);
+
+    if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'running')) {
+        const files = await api('/api/downloads');
+        renderFiles(files);
+        setTimeout(refresh, 5000);
+    }
 }
-
-initSelects();
-$('#downloadForm').onsubmit = createJob;
-
-refresh();
-setInterval(refresh, 2500);
 
 const btn = $('#theme-toggle');
 const icon = btn.querySelector('i');
@@ -214,4 +212,8 @@ btn.onclick = () => {
     applyTheme();
 };
 
+initSelects();
+$('#downloadForm').onsubmit = createJob;
+
+refresh();
 applyTheme();
