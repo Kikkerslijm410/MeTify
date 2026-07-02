@@ -1,4 +1,7 @@
 # MeTify
+
+![Docker Pulls](https://img.shields.io/docker/pulls/lucas410/metify.svg)
+
 Self-hosted music downloader for Spotify (web UI for spotdl)
 
 A lightweight web interface to download Spotify tracks and playlists using **spotDL**, with job tracking and file management.
