@@ -1,7 +1,7 @@
 services:
-  spotdl-app:
+  app:
     build: .
-    container_name: spotdl-dashboard
+    container_name: app
     ports:
       - "5000:5000"
     volumes:
