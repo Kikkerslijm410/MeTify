@@ -44,65 +44,7 @@ function update_script() {
 
 start
 build_container
-
-msg_info "Installing Dependencies"
-
-apt-get update
-apt-get install -y \
-  git \
-  ffmpeg \
-  python3 \
-  python3-pip \
-  python3-venv
-
-msg_ok "Installed Dependencies"
-
-msg_info "Cloning Repository"
-
-git clone https://github.com/Kikkerslijm410/MeTify.git /opt/metify
-
-msg_ok "Repository Cloned"
-
-msg_info "Creating Python Environment"
-
-cd /opt/metify
-
-python3 -m venv venv
-source venv/bin/activate
-
-pip install --upgrade pip
-pip install -r requirements.txt
-
-mkdir -p /opt/metify/downloads
-
-msg_ok "Python Environment Ready"
-
-msg_info "Creating Service"
-
-cat <<EOF >/etc/systemd/system/metify.service
-[Unit]
-Description=MeTify Service
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/metify
-ExecStart=/opt/metify/venv/bin/python /opt/metify/app.py
-Restart=always
-RestartSec=10
-User=root
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-systemctl daemon-reload
-systemctl enable metify
-systemctl start metify
-
-msg_ok "Service Created"
-
-IP=$(hostname -I | awk '{print $1}')
+description
 
 msg_ok "Completed Successfully!"
 
