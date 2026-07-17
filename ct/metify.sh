@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source <(curl -fsSL https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/misc/build.func)
 
-APP="MeTify"
+APP="metify"
 var_tags="${var_tags:-media;download}"
 var_cpu="${var_cpu:-2}"
 var_ram="${var_ram:-512}"
