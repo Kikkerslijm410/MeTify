@@ -1,0 +1,34 @@
+{
+    "name": "MeTify",
+    "slug": "metify",
+    "categories": [
+        11
+    ],
+    "date_created": "2026-06-27",
+    "type": "ct",
+    "updateable": true,
+    "privileged": false,
+    "interface_port": 5000,
+    "documentation": "https://github.com/Kikkerslijm410/MeTify/blob/main/README.md",
+    "website": "https://github.com/Kikkerslijm410/MeTify",
+    "logo": "https://raw.githubusercontent.com/Kikkerslijm410/MeTify/main/static/favicon/web-app-manifest-192x192.png",
+    "description": "MeTify allows you to download playlists and songs from Spotify using SpotDl.",
+    "install_methods": [
+        {
+            "type": "default",
+            "script": "ct/metify.sh",
+            "resources": {
+                "cpu": 2,
+                "ram": 512,
+                "hdd": 10,
+                "os": "debian",
+                "version": "13"
+            }
+        }
+    ],
+    "default_credentials": {
+        "username": null,
+        "password": null
+    },
+    "notes": []
+}

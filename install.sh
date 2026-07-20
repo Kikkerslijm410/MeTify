@@ -1,79 +1,121 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 APP="MeTify"
 HOSTNAME="metify"
 CPU="2"
 RAM="512"
 DISK="10"
-OS_VERSION="13"
-
-REPO="https://github.com/Kikkerslijm410/MeTify.git"
 BRANCH="7-add-proxmox-support"
+REPO="https://github.com/Kikkerslijm410/MeTify.git"
 
 echo "====================================="
-echo "  ${APP} Proxmox Installer"
+echo " ${APP} Proxmox Installer"
 echo "====================================="
+echo ""
 
 if [[ $EUID -ne 0 ]]; then
-  echo "Run als root."
+  echo "Run this script as root."
   exit 1
 fi
 
-CTID=$(pvesh get /cluster/nextid)
+command -v pct >/dev/null || {
+  echo "This script must run on a Proxmox host."
+  exit 1
+}
 
-echo ""
-echo "Container ID : $CTID"
-echo "CPU          : $CPU"
-echo "RAM          : ${RAM}MB"
-echo "Disk         : ${DISK}GB"
-echo ""
+echo "[1/8] Detecting storage"
 
-STORAGE=$(pvesm status | awk '$3=="active" {print $1}' | head -n1)
+ROOTFS_STORAGE=$(
+  pvesm status | awk '
+    $2=="zfspool" && $3=="active" {print $1; exit}
+    $2=="lvmthin" && $3=="active" {print $1; exit}
+    $2=="dir" && $3=="active" {print $1; exit}
+  '
+)
 
-TEMPLATE=$(pveam available --section system | \
-grep "debian-${OS_VERSION}-standard" | \
-tail -n1 | awk '{print $2}')
-
-echo "Template: $TEMPLATE"
-
-pveam update >/dev/null
-
-if ! pveam list local | grep -q "$TEMPLATE"; then
-  pveam download local "$TEMPLATE"
+if [[ -z "$ROOTFS_STORAGE" ]]; then
+  echo "No valid container storage found."
+  exit 1
 fi
 
-pct create "$CTID" "local:vztmpl/${TEMPLATE}" \
+TEMPLATE_STORAGE=$(
+  pvesm status | awk '
+    $2=="dir" && $3=="active" {print $1; exit}
+  '
+)
+
+if [[ -z "$TEMPLATE_STORAGE" ]]; then
+  echo "No template storage found."
+  exit 1
+fi
+
+echo "Container Storage : $ROOTFS_STORAGE"
+echo "Template Storage  : $TEMPLATE_STORAGE"
+
+CTID=$(pvesh get /cluster/nextid)
+
+echo "[2/8] Updating templates"
+pveam update >/dev/null
+
+TEMPLATE=$(pveam available --section system | \
+  grep "debian-13-standard" | \
+  tail -n1 | awk '{print $2}')
+
+if [[ -z "$TEMPLATE" ]]; then
+  echo "Debian 13 template not found."
+  exit 1
+fi
+
+if ! pveam list "$TEMPLATE_STORAGE" | grep -q "$TEMPLATE"; then
+  echo "[3/8] Downloading Debian template"
+  pveam download "$TEMPLATE_STORAGE" "$TEMPLATE"
+fi
+
+echo "[4/8] Creating container"
+
+pct create "$CTID" \
+  "$TEMPLATE_STORAGE:vztmpl/$TEMPLATE" \
   --hostname "$HOSTNAME" \
   --cores "$CPU" \
   --memory "$RAM" \
   --swap "$RAM" \
-  --rootfs "${STORAGE}:${DISK}" \
+  --rootfs "$ROOTFS_STORAGE:$DISK" \
   --net0 name=eth0,bridge=vmbr0,ip=dhcp \
-  --unprivileged 1 \
   --features nesting=1 \
+  --unprivileged 1 \
   --onboot 1
+
+echo "[5/8] Starting container"
 
 pct start "$CTID"
 
-echo "Wachten op container..."
+sleep 20
 
-sleep 15
+echo "[6/8] Installing dependencies"
+
+pct exec "$CTID" -- bash -c '
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+
+apt-get install -y \
+  git \
+  curl \
+  ffmpeg \
+  python3 \
+  python3-pip \
+  python3-venv
+'
+
+echo "[7/8] Installing MeTify"
 
 pct exec "$CTID" -- bash -c "
-apt update
-apt install -y \
-git \
-curl \
-ffmpeg \
-python3 \
-python3-pip \
-python3-venv
-"
-
-pct exec "$CTID" -- bash -c "
-git clone -b ${BRANCH} ${REPO} /opt/metify
+git clone --depth 1 \
+  --branch $BRANCH \
+  $REPO \
+  /opt/metify
 
 cd /opt/metify
 
@@ -88,7 +130,9 @@ pip install -r requirements.txt
 mkdir -p /downloads
 "
 
-pct exec "$CTID" -- bash -c "cat > /etc/systemd/system/metify.service << EOF
+echo "[8/8] Creating service"
+
+pct exec "$CTID" -- bash -c 'cat > /etc/systemd/system/metify.service <<EOF
 [Unit]
 Description=MeTify
 After=network.target
@@ -103,21 +147,28 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-EOF"
+EOF'
 
 pct exec "$CTID" -- systemctl daemon-reload
 pct exec "$CTID" -- systemctl enable metify
 pct exec "$CTID" -- systemctl start metify
 
-IP=$(pct exec "$CTID" -- hostname -I | awk '{print $1}')
+IP=$(pct exec "$CTID" -- hostname -I | awk "{print \$1}")
 
 echo ""
 echo "====================================="
-echo " INSTALL COMPLETE"
+echo " Installation Completed"
 echo "====================================="
-echo "CTID : $CTID"
-echo "URL  : http://${IP}:5000"
+echo ""
+echo "Container ID : $CTID"
+echo "Storage      : $ROOTFS_STORAGE"
+echo "CPU          : $CPU"
+echo "RAM          : ${RAM}MB"
+echo "Disk         : ${DISK}GB"
+echo ""
+echo "Open:"
+echo "http://${IP}:5000"
 echo ""
 echo "Logs:"
-echo "pct exec ${CTID} -- journalctl -u metify -f"
+echo "pct exec $CTID -- journalctl -u metify -f"
 echo ""
