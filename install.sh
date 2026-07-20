@@ -25,22 +25,21 @@ CTID=${CTID:-$NEXTID}
 read -p "Hostname [metify]: " HOSTNAME
 HOSTNAME=${HOSTNAME:-metify}
 
-read -es [2]: " CPU
+read res [2]: " CPU
 CPU=${CPU:-2}
 
-read -p "RAM MB]: " RAM
-RAM=${RAM:-512}
+read -p "RAM in MB [512]: " RAM
+12}
 
-read - GB [10]: " DISK
+read -p "Disk in GB [10]: " DISK
 DISK=${DISK:-10}
 
-read -p "Container Storage (bv zfs01): " STORAGE ""
-echo "Beschikbare bridges:"
-ip -o link show | awk -F': ' '/vmbr/ {print $2}'
-echo ""
+read -p "Storage(bijv. zfs01): " STORAGE
 
 read -p "Bridge [vmbr0]: " BRIDGE
-BRIDGE=${BRIDGE:-vmbr0} "Debian versie [13]: " DEBIAN
+BRIDGE:-vmbr0}
+
+read -p "Debian versie [13]: " DEBIAN
 DEBIAN=${DEBIAN:-13}
 
 echo ""
