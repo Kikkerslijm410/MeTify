@@ -18,7 +18,7 @@ command -v pct >/dev/null || {
 }
 
 NEXTID=$(pvesh get /cluster/nextid)
-read -rp "Container ID [120]: " CTID
+read -rp "Container ID [100]: " CTID
 CTID=${CTID:-$NEXTID}
 
 if pct status "$CTID" >/dev/null 2>&1; then
@@ -39,7 +39,7 @@ read -rp "Disk size [10]: " DISK
 DISK=${DISK:-10}
 
 echo
-echo "Beschikbare storage locaties:"
+echo "Available storage:"
 echo "--------------------------------"
 pvesm status | awk '{print $1}'
 echo "--------------------------------"
@@ -48,7 +48,7 @@ read -rp "Storage [local-lvm]: " STORAGE
 STORAGE=${STORAGE:-local-lvm}
 
 echo
-echo "Configuratie"
+echo "Container configuration"
 echo "--------------------------------"
 echo "CTID      : $CTID"
 echo "Hostname  : $HOSTNAME"
@@ -59,14 +59,12 @@ echo "Storage   : $STORAGE"
 echo "--------------------------------"
 echo
 
-read -rp "Doorgaan? (y/n): " CONFIRM
+read -rp "Continue? (y/n): " CONFIRM
 
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-echo
-echo "Debian template controleren..."
 
 pveam update
 
@@ -76,12 +74,12 @@ if ! pveam list local | grep -q debian-12-standard; then
     pveam download local "$TEMPLATE"
 fi
 
-TEMPLATE_FILE=$(pveam list local | grep debian-12-standard | tail -1 | awk '{print $2}')
-
 echo
 echo "Creating container..."
+TEMPLATE_FILE=$(pveam list local | grep debian-13-standard | tail -1 | awk '{print $1}')
+echo "Using template: $TEMPLATE_FILE"
 
-pct create "$CTID" "local:vztmpl/$TEMPLATE_FILE" \
+pct create "$CTID" "$TEMPLATE_FILE" \
     --hostname "$HOSTNAME" \
     --cores "$CORES" \
     --memory "$RAM" \
