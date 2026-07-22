@@ -7,6 +7,7 @@ echo "        MeTify LXC Installer"
 echo "======================================="
 echo
 
+# ID
 NEXTID=$(pvesh get /cluster/nextid)
 read -rp "Container ID: " CTID
 CTID=${CTID:-$NEXTID}
@@ -16,28 +17,23 @@ if pct status "$CTID" >/dev/null 2>&1; then
     exit 1
 fi
 
+# Hostname
 read -rp "Hostname [default: metify]: " HOSTNAME
 HOSTNAME=${HOSTNAME:-metify}
 
+# RAM
 read -rp "RAM MB [default: 512]: " RAM
 RAM=${RAM:-512}
 
+# CPU cores
 read -rp "CPU cores [default: 2]: " CORES
 CORES=${CORES:-2}
 
+# DISK size
 read -rp "Disk size [default: 10]: " DISK
 DISK=${DISK:-10}
 
-# echo
-# echo "Available storage:"
-# echo "--------------------------------"
-# pvesm status | awk '{print $1}'
-# echo "--------------------------------"
-# echo
-# read -rp "Storage [local-lvm]: " STORAGE
-# STORAGE=${STORAGE:-local-lvm}
-
-echo
+# Template selection
 echo "Available templates:"
 echo "--------------------------------"
 
@@ -57,7 +53,7 @@ fi
 
 TEMPLATE_FILE="${TEMPLATES[$((TEMPLATE_NUM-1))]}"
 
-echo
+# Storage selection
 echo "Available storage:"
 echo "--------------------------------"
 
@@ -89,18 +85,6 @@ echo "Disk      : ${DISK}GB"
 echo "Storage   : $STORAGE"
 echo "Template  : $TEMPLATE_FILE"
 echo "--------------------------------"
-
-
-echo
-echo "Container configuration"
-echo "--------------------------------"
-echo "CTID      : $CTID"
-echo "Hostname  : $HOSTNAME"
-echo "RAM       : ${RAM}MB"
-echo "CPU       : $CORES"
-echo "Disk      : ${DISK}GB"
-echo "Storage   : $STORAGE"
-echo "--------------------------------"
 echo
 read -rp "Continue? (y/n): " CONFIRM
 
@@ -113,11 +97,9 @@ pveam update
 echo
 echo "Creating container..."
 
-# TEMPLATE_FILE=$(pveam list local | grep debian-13-standard | tail -1 | awk '{print $1}')
-# echo "Using template: $TEMPLATE_FILE"
-
 pct create "$CTID" "$TEMPLATE_FILE" \
     --hostname "$HOSTNAME" \
+    --cmode shell \
     --cores "$CORES" \
     --memory "$RAM" \
     --rootfs "$STORAGE:$DISK" \
@@ -181,19 +163,9 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-mkdir -p /etc/systemd/system/getty@tty1.service.d
-
-cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
-EOF
-
 systemctl daemon-reload
 systemctl enable metify
 systemctl restart metify
-systemctl restart getty@tty1
-
 sleep 3
 systemctl --no-pager --full status metify
 "
