@@ -1,4 +1,4 @@
-import os, uuid, time, threading, subprocess
+import os, uuid, time, threading, subprocess, sys
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_from_directory, abort
@@ -28,7 +28,7 @@ def build_spotdl_command(data):
     if not url:
         raise ValueError("Enter a Spotify/playlist/track URL.")
 
-    cmd = ["python3", "-m", "spotdl", "download", url]
+    cmd = [sys.executable, "-m", "spotdl", "download", url]
 
     audio = data.get("audio") or []
     if isinstance(audio, str):

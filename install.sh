@@ -64,7 +64,7 @@ for i in "${!STORAGES[@]}"; do
 done
 
 echo "--------------------------------"
-read -rp "Storage number [1]: " STORAGE_NUM
+read -rp "Storage number: " STORAGE_NUM
 STORAGE_NUM=${STORAGE_NUM:-1}
 
 if [[ ! "$STORAGE_NUM" =~ ^[0-9]+$ ]] || [ "$STORAGE_NUM" -lt 1 ] || [ "$STORAGE_NUM" -gt "${#STORAGES[@]}" ]; then
@@ -133,9 +133,8 @@ git clone \
 pct exec "$CTID" -- bash -c "
 cd /opt/metify &&
 python3 -m venv .venv &&
-source .venv/bin/activate &&
-python3 -m pip install --upgrade pip &&
-python3 -m pip install -r requirements.txt &&
+./.venv/bin/python -m pip install --upgrade pip &&
+./.venv/bin/python -m pip install -r requirements.txt &&
 mkdir -p /downloads
 "
 
