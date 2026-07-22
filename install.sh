@@ -7,18 +7,8 @@ echo "        MeTify LXC Installer"
 echo "======================================="
 echo
 
-if [[ $EUID -ne 0 ]]; then
-    echo "Run as root."
-    exit 1
-fi
-
-command -v pct >/dev/null || {
-    echo "This script must run on a Proxmox host."
-    exit 1
-}
-
 NEXTID=$(pvesh get /cluster/nextid)
-read -rp "Container ID [100]: " CTID
+read -rp "Container ID: " CTID
 CTID=${CTID:-$NEXTID}
 
 if pct status "$CTID" >/dev/null 2>&1; then
@@ -26,26 +16,80 @@ if pct status "$CTID" >/dev/null 2>&1; then
     exit 1
 fi
 
-read -rp "Hostname [metify]: " HOSTNAME
+read -rp "Hostname [default: metify]: " HOSTNAME
 HOSTNAME=${HOSTNAME:-metify}
 
-read -rp "RAM MB [512]: " RAM
+read -rp "RAM MB [default: 512]: " RAM
 RAM=${RAM:-512}
 
-read -rp "CPU cores [2]: " CORES
+read -rp "CPU cores [default: 2]: " CORES
 CORES=${CORES:-2}
 
-read -rp "Disk size [10]: " DISK
+read -rp "Disk size [default: 10]: " DISK
 DISK=${DISK:-10}
+
+# echo
+# echo "Available storage:"
+# echo "--------------------------------"
+# pvesm status | awk '{print $1}'
+# echo "--------------------------------"
+# echo
+# read -rp "Storage [local-lvm]: " STORAGE
+# STORAGE=${STORAGE:-local-lvm}
+
+echo
+echo "Available templates:"
+echo "--------------------------------"
+
+mapfile -t TEMPLATES < <(pveam list local | awk '{print $1}' | grep -E 'debian|ubuntu')
+
+for i in "${!TEMPLATES[@]}"; do
+    echo "$((i+1))) ${TEMPLATES[$i]}"
+done
+
+echo "--------------------------------"
+read -rp "Template number: " TEMPLATE_NUM
+
+if [[ ! "$TEMPLATE_NUM" =~ ^[0-9]+$ ]] || [ "$TEMPLATE_NUM" -lt 1 ] || [ "$TEMPLATE_NUM" -gt "${#TEMPLATES[@]}" ]; then
+    echo "Invalid template selection."
+    exit 1
+fi
+
+TEMPLATE_FILE="${TEMPLATES[$((TEMPLATE_NUM-1))]}"
 
 echo
 echo "Available storage:"
 echo "--------------------------------"
-pvesm status | awk '{print $1}'
+
+mapfile -t STORAGES < <(pvesm status | awk 'NR>1 {print $1}')
+
+for i in "${!STORAGES[@]}"; do
+    echo "$((i+1))) ${STORAGES[$i]}"
+done
+
 echo "--------------------------------"
+read -rp "Storage number [1]: " STORAGE_NUM
+STORAGE_NUM=${STORAGE_NUM:-1}
+
+if [[ ! "$STORAGE_NUM" =~ ^[0-9]+$ ]] || [ "$STORAGE_NUM" -lt 1 ] || [ "$STORAGE_NUM" -gt "${#STORAGES[@]}" ]; then
+    echo "Invalid storage selection."
+    exit 1
+fi
+
+STORAGE="${STORAGES[$((STORAGE_NUM-1))]}"
+
 echo
-read -rp "Storage [local-lvm]: " STORAGE
-STORAGE=${STORAGE:-local-lvm}
+echo "Container configuration"
+echo "--------------------------------"
+echo "CTID      : $CTID"
+echo "Hostname  : $HOSTNAME"
+echo "RAM       : ${RAM}MB"
+echo "CPU       : $CORES"
+echo "Disk      : ${DISK}GB"
+echo "Storage   : $STORAGE"
+echo "Template  : $TEMPLATE_FILE"
+echo "--------------------------------"
+
 
 echo
 echo "Container configuration"
@@ -58,26 +102,19 @@ echo "Disk      : ${DISK}GB"
 echo "Storage   : $STORAGE"
 echo "--------------------------------"
 echo
-
 read -rp "Continue? (y/n): " CONFIRM
 
 if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-
 pveam update
-
-TEMPLATE=$(pveam available | grep debian-12-standard | tail -1 | awk '{print $2}')
-
-if ! pveam list local | grep -q debian-12-standard; then
-    pveam download local "$TEMPLATE"
-fi
 
 echo
 echo "Creating container..."
-TEMPLATE_FILE=$(pveam list local | grep debian-13-standard | tail -1 | awk '{print $1}')
-echo "Using template: $TEMPLATE_FILE"
+
+# TEMPLATE_FILE=$(pveam list local | grep debian-13-standard | tail -1 | awk '{print $1}')
+# echo "Using template: $TEMPLATE_FILE"
 
 pct create "$CTID" "$TEMPLATE_FILE" \
     --hostname "$HOSTNAME" \
@@ -120,7 +157,6 @@ python -m pip install -r requirements.txt &&
 mkdir -p /downloads
 "
 
-
 pct exec "$CTID" -- bash -c "
 cat > /etc/systemd/system/metify.service << EOF
 [Unit]
@@ -145,9 +181,19 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
+mkdir -p /etc/systemd/system/getty@tty1.service.d
+
+cat > /etc/systemd/system/getty@tty1.service.d/override.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
+EOF
+
 systemctl daemon-reload
 systemctl enable metify
 systemctl restart metify
+systemctl restart getty@tty1
+
 sleep 3
 systemctl --no-pager --full status metify
 "
