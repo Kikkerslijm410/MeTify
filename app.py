@@ -28,7 +28,7 @@ def build_spotdl_command(data):
     if not url:
         raise ValueError("Enter a Spotify/playlist/track URL.")
 
-    cmd = ["python", "-m", "spotdl", "download", url]
+    cmd = ["python3", "-m", "spotdl", "download", url]
 
     audio = data.get("audio") or []
     if isinstance(audio, str):

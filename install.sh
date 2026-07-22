@@ -134,8 +134,8 @@ pct exec "$CTID" -- bash -c "
 cd /opt/metify &&
 python3 -m venv .venv &&
 source .venv/bin/activate &&
-python -m pip install --upgrade pip &&
-python -m pip install -r requirements.txt &&
+python3 -m pip install --upgrade pip &&
+python3 -m pip install -r requirements.txt &&
 mkdir -p /downloads
 "
 
@@ -149,15 +149,9 @@ After=network.target
 Type=simple
 WorkingDirectory=/opt/metify
 Environment=DOWNLOAD_DIR=/downloads
-ExecStart=/opt/metify/.venv/bin/python /opt/metify/app.py
+ExecStart=/opt/metify/.venv/bin/python3 /opt/metify/app.py
 Restart=always
 RestartSec=5
-
-User=root
-Group=root
-
-StandardOutput=journal
-StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
@@ -166,8 +160,6 @@ EOF
 systemctl daemon-reload
 systemctl enable metify
 systemctl restart metify
-sleep 3
-systemctl --no-pager --full status metify
 "
 
 IP=$(pct exec "$CTID" -- hostname -I | awk '{print $1}')
