@@ -17,8 +17,7 @@ print_header() {
   echo
 }
 
-NEXTID=$(pvesh get /nodes/$(hostname)/lxc | grep -o '"vmid":[0-9]*' | grep -o '[0-9]*' | sort -n | tail -1)
-NEXTID=$((NEXTID + 1))
+NEXTID=$(pvesh get /cluster/nextid 2>/dev/null)
 read -rp "Container ID [$NEXTID]: " CTID
 CTID=${CTID:-$NEXTID}
 
