@@ -1,36 +1,35 @@
 #!/usr/bin/env bash
 set -euo pipefail
-clear
 
-echo "======================================="
-echo "        MeTify LXC Installer"
-echo "======================================="
-echo
+# Colors
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+NC='\033[0m'
 
-# ID
-NEXTID=$(pvesh get /cluster/nextid)
-read -rp "Container ID: " CTID
+print_header() {
+  clear
+  echo -e "${CYAN}╔══════════════════════════════════════╗${NC}"
+  echo -e "${CYAN}║${WHITE}         MeTify LXC Installer         ${CYAN}║${NC}"
+  echo -e "${CYAN}╚══════════════════════════════════════╝${NC}"
+  echo
+}
+
+read -rp "Container ID [$NEXTID]: " CTID
 CTID=${CTID:-$NEXTID}
 
-if pct status "$CTID" >/dev/null 2>&1; then
-    echo "Container ID $CTID already exists."
-    exit 1
-fi
-
-# Hostname
-read -rp "Hostname [default: metify]: " HOSTNAME
+read -rp "Hostname [metify]: " HOSTNAME
 HOSTNAME=${HOSTNAME:-metify}
 
-# RAM
-read -rp "RAM MB [default: 512]: " RAM
+read -rp "RAM MB [512]: " RAM
 RAM=${RAM:-512}
 
-# CPU cores
-read -rp "CPU cores [default: 2]: " CORES
+read -rp "CPU Cores [2]: " CORES
 CORES=${CORES:-2}
 
-# DISK size
-read -rp "Disk size [default: 10]: " DISK
+read -rp "Disk GB [10]: " DISK
 DISK=${DISK:-10}
 
 # Template selection
@@ -75,16 +74,13 @@ fi
 STORAGE="${STORAGES[$((STORAGE_NUM-1))]}"
 
 echo
-echo "Container configuration"
-echo "--------------------------------"
-echo "CTID      : $CTID"
-echo "Hostname  : $HOSTNAME"
-echo "RAM       : ${RAM}MB"
-echo "CPU       : $CORES"
-echo "Disk      : ${DISK}GB"
-echo "Storage   : $STORAGE"
-echo "Template  : $TEMPLATE_FILE"
-echo "--------------------------------"
+echo -e "${BLUE}CTID      :${NC} $CTID"
+echo -e "${BLUE}Hostname  :${NC} $HOSTNAME"
+echo -e "${BLUE}RAM       :${NC} ${RAM} MB"
+echo -e "${BLUE}CPU       :${NC} $CORES"
+echo -e "${BLUE}Disk      :${NC} ${DISK} GB"
+echo -e "${BLUE}Storage   :${NC} $STORAGE"
+echo -e "${BLUE}Template  :${NC} $TEMPLATE_FILE"
 echo
 read -rp "Continue? (y/n): " CONFIRM
 
@@ -164,11 +160,14 @@ systemctl restart metify
 IP=$(pct exec "$CTID" -- hostname -I | awk '{print $1}')
 
 echo
-echo "================================="
-echo " Installation completed!"
-echo "================================="
+echo -e "${GREEN}╔══════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║       Installation Completed!        ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════╝${NC}"
 echo
-echo "Container ID : $CTID"
-echo "IP adress    : $IP"
+
+echo -e "${CYAN}Container ID :${NC} $CTID"
+echo -e "${CYAN}IP Address   :${NC} $IP"
 echo
-echo "http://$IP:5000"
+
+echo -e "${YELLOW}🌐 Open MeTify:${NC}"
+echo -e "${WHITE}http://$IP:5000${NC}"
