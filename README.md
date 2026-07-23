@@ -33,19 +33,6 @@ http://localhost:5000
 
 ---
 
-## 📡 API Endpoints
-
-### Jobs
-- `POST /api/jobs` → Start download
-- `GET /api/jobs` → List jobs
-
-### Files
-- `GET /api/downloads` → List downloaded files
-- `POST /api/download` → Download a file
-- `DELETE /api/downloads/<filename>` → Delete a file
-
----
-
 ## 🐍 Run Locally (without Docker)
 
 ### 1. Install dependencies
@@ -59,3 +46,14 @@ python app.py
 ```
 
 ---
+
+## 📡 API Endpoints
+
+### Jobs
+- `POST /api/jobs` → Start download
+- `GET /api/jobs` → List jobs
+
+### Files
+- `GET /api/downloads` → List downloaded files
+- `POST /api/download` → Download a file
+- `DELETE /api/downloads/<filename>` → Delete a file
