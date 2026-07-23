@@ -122,7 +122,7 @@ cd /opt &&
 rm -rf metify &&
 git clone \
   --depth 1 \
-  --branch 7-add-proxmox-support \
+  --branch main \
   https://github.com/Kikkerslijm410/MeTify.git \
   metify
 "
