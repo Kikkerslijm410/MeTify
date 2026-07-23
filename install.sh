@@ -17,6 +17,7 @@ print_header() {
   echo
 }
 
+NEXTID=$(pvesh get /cluster/nextid)
 read -rp "Container ID [$NEXTID]: " CTID
 CTID=${CTID:-$NEXTID}
 
@@ -169,5 +170,5 @@ echo -e "${CYAN}Container ID :${NC} $CTID"
 echo -e "${CYAN}IP Address   :${NC} $IP"
 echo
 
-echo -e "${YELLOW}🌐 Open MeTify:${NC}"
+echo -e "${YELLOW}Open MeTify:${NC}"
 echo -e "${WHITE}http://$IP:5000${NC}"
