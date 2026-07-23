@@ -116,7 +116,7 @@ sleep 15
 
 pct exec "$CTID" -- bash -c "
 apt update &&
-apt install -y git python3 python3-pip python3-venv
+apt install -y git python3 python3-pip python3-venv ffmpeg
 "
 
 pct exec "$CTID" -- bash -c "
