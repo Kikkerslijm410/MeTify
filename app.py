@@ -37,12 +37,19 @@ def build_spotdl_command(data):
     if audio:
         cmd += ["--audio", *audio]
 
-    options = data.get("options")
+    allowed_options = {
+        "--generate-lrc",
+        "--skip-explicit",
+        "--only-verified-results",
+    }
+
+    options = data.get("options") or []
     if isinstance(options, str):
         options = [options]
-    options = [l for l in options]
+
+    options = [opt for opt in options if opt in allowed_options]
     if options:
-        cmd += [*options]
+        cmd += options
 
     max_retries = str(data.get("max_retries")).strip()
     cmd += ["--max-retries", max_retries]
