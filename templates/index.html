@@ -40,18 +40,14 @@
                     <select name="audio" class="js-multi-select" multiple>
                         <option value="youtube" selected>youtube</option>
                         <option value="youtube-music" selected>youtube-music</option>
-                        <option value="soundcloud">soundcloud</option>
-                        <option value="bandcamp">bandcamp</option>
-                        <option value="piped">piped</option>
                     </select>
                 </label>
 
-                <label>Lyrics
-                    <select name="lyrics" class="js-multi-select" multiple>
-                        <option value="genius">genius</option>
-                        <option value="musixmatch">musixmatch</option>
-                        <option value="azlyrics">azlyrics</option>
-                        <option value="synced">synced</option>
+                <label>Options
+                    <select name="options" class="js-multi-select" multiple>
+                        <option value="--generate-lrc">Generate lyrics</option>
+                        <option value="--skip-explicit">Skip explicit</option>
+                        <option value="--only-verified-results">Only verified results</option>
                     </select>
                 </label>
 
@@ -60,7 +56,7 @@
                 </label>
 
                 <label>Threads
-                    <input name="max_threads" type="number" min="1" max="10" value="1"> 
+                    <input name="max_threads" type="number" min="1" max="99" value="1"> 
                 </label>
 
                 <label>Bitrate

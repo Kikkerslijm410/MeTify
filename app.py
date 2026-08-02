@@ -24,36 +24,36 @@ def list_downloads():
     return items
 
 def build_spotdl_command(data):
-    url = (data.get("url") or "").strip()
+    url = (data.get("url")).strip()
     if not url:
         raise ValueError("Enter a Spotify/playlist/track URL.")
 
     cmd = [sys.executable, "-m", "spotdl", "download", url]
 
-    audio = data.get("audio") or []
+    audio = data.get("audio")
     if isinstance(audio, str):
         audio = [audio]
     audio = [a for a in audio]
     if audio:
         cmd += ["--audio", *audio]
 
-    lyrics = data.get("lyrics") or []
-    if isinstance(lyrics, str):
-        lyrics = [lyrics]
-    lyrics = [l for l in lyrics]
-    if lyrics:
-        cmd += ["--lyrics", *lyrics]
+    options = data.get("options")
+    if isinstance(options, str):
+        options = [options]
+    options = [l for l in options]
+    if options:
+        cmd += [*options]
 
-    max_retries = str(data.get("max_retries") or "3").strip()
+    max_retries = str(data.get("max_retries")).strip()
     cmd += ["--max-retries", max_retries]
 
-    threads = str(data.get("threads") or "1").strip()
+    threads = str(data.get("threads")).strip()
     cmd += ["--threads", threads]
 
-    bitrate = (data.get("bitrate") or "auto").strip()
+    bitrate = (data.get("bitrate")).strip()
     cmd += ["--bitrate", bitrate]
 
-    fmt = (data.get("format") or "mp3").strip()
+    fmt = (data.get("format")).strip()
     cmd += ["--format", fmt]
 
     return cmd
@@ -107,7 +107,7 @@ def run_job(job_id, data):
 def index():
     return render_template("index.html")
 
-@app.post("/api/jobs") # Method POST
+@app.post("/api/jobs")
 def create_job():
     data = request.get_json(force=True)
     job_id = str(uuid.uuid4())
@@ -121,9 +121,9 @@ def create_job():
         }
     thread = threading.Thread(target=run_job, args=(job_id, data), daemon=True)
     thread.start()
-    return jsonify(jobs[job_id]), 202
+    return jsonify(jobs[job_id]), 201
 
-@app.get("/api/jobs") # Method GET
+@app.get("/api/jobs")
 def get_jobs():
     with jobs_lock:
         return jsonify(list(jobs.values())[::-1])
