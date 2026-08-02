@@ -14,6 +14,7 @@ const api = async (url, opts={}) => {
 const bytes = n => `${(n / 1024 ** 2).toFixed(1)} MB`;
 const selectedValues = (form, name) => [...form[name].selectedOptions].map(o => o.value);
 
+// Multi-select enhancement
 function initSelects() {
     const closeAll = () => document.querySelectorAll('.multi-select.open').forEach(d => d.classList.remove('open'));
 
@@ -111,7 +112,7 @@ async function createJob(e){
             body: JSON.stringify({
                 url: f.url.value,
                 audio: selectedValues(f, 'audio'),
-                lyrics: selectedValues(f, 'lyrics'),
+                options: selectedValues(f, 'options'),
                 max_retries: f.max_retries.value,
                 threads: f.max_threads.value,
                 bitrate: f.bitrate.value,
@@ -189,6 +190,9 @@ const deleteFile = async name => {
 async function refresh() {
     const jobs = await api('/api/jobs');
     renderJobs(jobs);
+
+    const files = await api('/api/downloads');
+    renderFiles(files);
 
     if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'running')) {
         const files = await api('/api/downloads');

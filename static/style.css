@@ -133,11 +133,6 @@ label {
   position: relative;
 }
 
-small {
-  color: var(--muted);
-  font-weight: 400;
-}
-
 input {
   width: 100%;
   border: 1px solid var(--border);
@@ -242,16 +237,6 @@ select.multi-select-source {
   display: inline-flex;
   justify-content: center;
   align-items: center;
-}
-
-.secondary {
-  background: var(--border);
-  color: var(--text);
-}
-
-.danger {
-  background: var(--danger);
-  color: white;
 }
 
 .columns {

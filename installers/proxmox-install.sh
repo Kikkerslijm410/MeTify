@@ -132,6 +132,7 @@ cd /opt/metify &&
 python3 -m venv .venv &&
 ./.venv/bin/python -m pip install --upgrade pip &&
 ./.venv/bin/python -m pip install -r requirements.txt &&
+./.venv/bin/spotdl --download-deno &&
 mkdir -p /downloads
 "
 

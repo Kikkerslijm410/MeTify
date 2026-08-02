@@ -1,6 +1,15 @@
-# MeTify
+# **MeTify**
 
-![Docker Pulls](https://img.shields.io/docker/pulls/lucas410/metify.svg)
+![Docker Pulls](https://img.shields.io/docker/pulls/lucas410/metify)
+![Last Commit](https://img.shields.io/github/last-commit/kikkerslijm410/metify)
+![GitHub Stars](https://img.shields.io/github/stars/kikkerslijm410/metify)
+
+<!-- ![GitHub License](https://img.shields.io/github/license/kikkerslijm410/metify)
+![GitHub Forks](https://img.shields.io/github/forks/kikkerslijm410/metify)
+![GitHub Issues](https://img.shields.io/github/issues/kikkerslijm410/metify)
+![GitHub Branches](https://img.shields.io/github/branches/kikkerslijm410/metify.svg)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/kikkerslijm410/metify) -->
+
 
 Self-hosted music downloader for Spotify (web UI for spotdl)
 
@@ -15,11 +24,10 @@ A lightweight web interface to download Spotify tracks and playlists using **spo
 - Background job queue with progress tracking
 - Live logs per download
 - File management (list, download, delete)
-- Simple web UI (Flask + JavaScript)
 
 ---
 
-## 🐳 Getting Started (Docker)
+## 🐳 Run using Docker
 
 ### 1. Build and run
 ```bash
@@ -33,7 +41,7 @@ http://localhost:5000
 
 ---
 
-## 🐍 Run Locally (without Docker)
+## 🐍 Run using Python
 
 ### 1. Install dependencies
 ```bash
@@ -43,6 +51,14 @@ pip install -r requirements.txt
 ### 2. Start app
 ```bash
 python app.py
+```
+
+---
+## 🖥️ Run using Proxmox
+
+### 1. Build and run
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Kikkerslijm410/MeTify/refs/heads/main/installers/proxmox-install.sh)"
 ```
 
 ---
