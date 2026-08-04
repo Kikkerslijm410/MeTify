@@ -4,6 +4,8 @@ const $$ = s => [...document.querySelectorAll(s)];
 const jobsEl = $('#jobs');
 const filesEl = $('#files');
 const msg = $('#message');
+const selectAllEl = $('#select-all-files');
+const selectionCountEl = $('#selection-count');
 
 const api = async (url, opts={}) => {
     const r = await fetch(url, opts);
@@ -59,7 +61,7 @@ function initSelects() {
 
                 row.append(checkbox, label);
 
-                row.onclick = e => {
+                row.onclick = () => {
                     opt.selected = !opt.selected;
                     sync();
                     update();
@@ -72,7 +74,7 @@ function initSelects() {
 
                 if (opt.selected) row.classList.add('selected');
 
-                row.onclick = e => {
+                row.onclick = () => {
                     [...select.options].forEach(o => o.selected = false);
                     opt.selected = true;
 
@@ -89,7 +91,7 @@ function initSelects() {
             menu.appendChild(row);
         });
 
-        btn.onclick = e => {
+        btn.onclick = () => {
             const isOpen = wrap.classList.contains('open');
             closeAll();
             if (!isOpen) wrap.classList.add('open');
@@ -145,47 +147,100 @@ function renderJobs(jobs){
     `);
 }
 
-function renderFiles(files){
-    render(filesEl, files, '<div class="item muted">No files.</div>', f => `
-        <div class="item">
-            <div class="item-head">
-                <div style="display:flex;justify-content:space-between;width:100%">
-                    <div>
-                        <strong>${f.name}</strong>
-                        <div class="muted">${bytes(f.size)} • ${f.modified}</div>
-                    </div>
-                    <div class="actions">
-                        <button class="icon-btn" onclick="downloadFile('${f.name}')" title="Download">
-                            <i class="fa-solid fa-download" style="color: #22c55e;"></i>
-                        </button>
-                        <button class="icon-btn" onclick="deleteFile('${f.name}')" title="Delete">
-                            <i class="fa-solid fa-trash-can" style="color: #ef4444;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `);
-}
+function renderFiles(files) {
+    const groups = {};
 
-const downloadFile = filename =>
-    fetch('/api/download', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ filename })
-    })
-    .then(r => r.blob())
-    .then(b => {
-        const url = URL.createObjectURL(b);
-        const a = Object.assign(document.createElement('a'), {href:url, download:filename});
-        a.click();
-        URL.revokeObjectURL(url);
+    files.forEach(file => {
+        const baseName = file.name.replace(/\.(mp3|flac|m4a|wav|lrc)$/i, '');
+        if (!groups[baseName]) groups[baseName] = [];
+        groups[baseName].push(file);
     });
 
-const deleteFile = async name => {
-    await fetch(`/api/downloads/${name}`, {method:'DELETE'});
-    refresh();
-};
+    const html = Object.entries(groups).map(([title, groupFiles]) => {
+
+        const sorted = groupFiles.sort((a, b) => {
+            const aIsLrc = a.name.toLowerCase().endsWith('.lrc');
+            const bIsLrc = b.name.toLowerCase().endsWith('.lrc');
+            if (aIsLrc && !bIsLrc) return 1;
+            if (!aIsLrc && bIsLrc) return -1;
+            return 0;
+        });
+
+        // Single files (like just an mp3 or just an lrc) are displayed without a group header
+        const isGrouped = sorted.length > 1;
+            return `
+                <div class="song-group${isGrouped ? ' grouped' : ''}" data-group="${title}">
+                    ${isGrouped ? `
+                        <div class="song-group-header">
+                            <input type="checkbox" class="group-checkbox">
+                            <i class="fa-solid fa-folder"></i>
+                            <div class="song-title">${title}</div>
+                        </div>
+                    ` : ''}
+
+
+                <div class="song-files">
+                    ${sorted.map(f => `
+                        <div class="song-file">
+                            <input type="checkbox" class="file-checkbox" value="${f.name}">
+
+                            <div class="song-file-icon">
+                                ${f.name.toLowerCase().endsWith('.lrc')
+                                    ? '<i class="fa-solid fa-file-lines"></i>'
+                                    : '<i class="fa-solid fa-music"></i>'}
+                            </div>
+
+                            <div class="song-file-info">
+                                <div class="song-file-name">${isGrouped ? f.name : title}</div>
+                                <div class="muted">${bytes(f.size)} • ${f.bitrate} • ${f.modified}</div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    filesEl.innerHTML = html || '<div class="item muted">No files.</div>';
+    syncSelectionState();
+}
+
+function syncSelectionState() {
+    $$('.song-group').forEach(group => {
+        const groupCb = group.querySelector('.group-checkbox');
+        if (!groupCb) return;
+
+        const fileCbs = [...group.querySelectorAll('.file-checkbox')];
+        const checkedCount = fileCbs.filter(cb => cb.checked).length;
+
+        groupCb.checked = checkedCount === fileCbs.length;
+        groupCb.indeterminate = checkedCount > 0 && checkedCount < fileCbs.length;
+    });
+
+    const allFileCbs = $$('.file-checkbox');
+    const allChecked = allFileCbs.filter(cb => cb.checked).length;
+
+    selectAllEl.checked = allFileCbs.length > 0 && allChecked === allFileCbs.length;
+    selectAllEl.indeterminate = allChecked > 0 && allChecked < allFileCbs.length;
+
+    selectionCountEl.textContent = `${allChecked} geselecteerd`;
+
+    const hasSelection = allChecked > 0;
+    $$('.selection-bar .actions button').forEach(b => b.disabled = !hasSelection);
+}
+
+filesEl.addEventListener('change', e => {
+    if (e.target.classList.contains('group-checkbox')) {
+        const group = e.target.closest('.song-group');
+        group.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = e.target.checked);
+    }
+    syncSelectionState();
+});
+
+selectAllEl.addEventListener('change', () => {
+    $$('.file-checkbox').forEach(cb => cb.checked = selectAllEl.checked);
+    syncSelectionState();
+});
 
 async function refresh() {
     const jobs = await api('/api/jobs');
@@ -195,8 +250,6 @@ async function refresh() {
     renderFiles(files);
 
     if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'running')) {
-        const files = await api('/api/downloads');
-        renderFiles(files);
         setTimeout(refresh, 5000);
     }
 }
@@ -221,3 +274,53 @@ $('#downloadForm').onsubmit = createJob;
 
 refresh();
 applyTheme();
+
+async function downloadFile(filename) {
+    return downloadFiles([filename]);
+}
+
+async function downloadFiles(filenames) {
+    const res = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filenames })
+    });
+
+    if (!res.ok) {
+        msg.textContent = `Fout bij downloaden: ${await res.text()}`;
+        return;
+    }
+
+    const blob = await res.blob();
+    const isZip = filenames.length > 1;
+    const downloadName = isZip ? 'MeTify.zip' : filenames[0];
+
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: downloadName });
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+async function downloadSelectedFiles() {
+    const files = $$('.file-checkbox:checked').map(cb => cb.value);
+    if (!files.length) return;
+    downloadFiles(files);
+}
+
+async function deleteFile(name) {
+    await fetch(`/api/downloads/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    refresh();
+}
+
+async function deleteSelectedFiles() {
+    const files = $$('.file-checkbox:checked').map(cb => cb.value);
+
+    await Promise.all(
+        files.map(name =>
+            fetch(`/api/downloads/${encodeURIComponent(name)}`, { method: 'DELETE' })
+        )
+    );
+
+    refresh();
+}
+

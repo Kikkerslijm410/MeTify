@@ -91,6 +91,21 @@
             </div>
             <div class="card">
                 <h2>Downloaded files</h2>
+                <div class="selection-bar">
+                    <label>
+                        <input type="checkbox" id="select-all-files">
+                        Select all
+                    </label>
+                    <span id="selection-count" class="muted">0 selected</span>
+                    <div class="actions">
+                        <button onclick="downloadSelectedFiles()">
+                            <i class="fa-solid fa-download"></i> Download selected
+                        </button>
+                        <button class="danger" onclick="deleteSelectedFiles()">
+                            <i class="fa-solid fa-trash-can"></i> Delete selected
+                        </button>
+                    </div>
+                </div>
                 <div id="files" class="list"></div>
             </div>
         </section>

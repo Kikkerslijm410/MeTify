@@ -1,7 +1,7 @@
-import os, uuid, time, threading, subprocess, sys
+import os, uuid, time, threading, subprocess, sys, io, zipfile
 from pathlib import Path
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template, send_from_directory, abort
+from flask import Flask, request, jsonify, render_template, send_from_directory, abort, send_file
 
 app = Flask(__name__)
 
@@ -141,14 +141,35 @@ def downloads():
 
 @app.post("/api/download")
 def download_file():
-    data = request.get_json()
-    filename = data.get("filename") if data else None
+    data = request.get_json() or {}
 
-    path = Path(DOWNLOAD_DIR) / filename
-    if not path.exists() or not path.is_file():
-        abort(404, "File not found")
+    filenames = data.get("filenames")
+    if filenames is None:
+        single = data.get("filename")
+        filenames = [single] if single else []
 
-    return send_from_directory(DOWNLOAD_DIR, filename, as_attachment=True)
+    if not filenames:
+        abort(400, "No filename(s) provided")
+
+    safe_names = [os.path.basename(f) for f in filenames]
+
+    paths = []
+    for name in safe_names:
+        path = DOWNLOAD_DIR / name
+        if not path.exists() or not path.is_file():
+            abort(404, f"File not found: {name}")
+        paths.append(path)
+
+    if len(paths) == 1:
+        return send_from_directory(DOWNLOAD_DIR, safe_names[0], as_attachment=True)
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for path, name in zip(paths, safe_names):
+            zf.write(path, arcname=name)
+    buffer.seek(0)
+
+    return send_file(buffer, mimetype="application/zip", as_attachment=True, download_name="MeTify.zip",)
 
 @app.delete("/api/downloads/<path:filename>")
 def delete_file(filename):
