@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, render_template, send_from_directory,
 
 app = Flask(__name__)
 
-DOWNLOAD_DIR = Path("/downloads").resolve()
+DOWNLOAD_DIR = Path("./downloads").resolve()
 DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 jobs = {}

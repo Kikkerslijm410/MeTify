@@ -132,8 +132,7 @@ cd /opt/metify &&
 python3 -m venv .venv &&
 ./.venv/bin/python -m pip install --upgrade pip &&
 ./.venv/bin/python -m pip install -r requirements.txt &&
-./.venv/bin/spotdl --download-deno &&
-mkdir -p /downloads
+./.venv/bin/spotdl --download-deno
 "
 
 pct exec "$CTID" -- bash -c "
@@ -145,7 +144,6 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/metify
-Environment=DOWNLOAD_DIR=/downloads
 ExecStart=/opt/metify/.venv/bin/python3 /opt/metify/app.py
 Restart=always
 RestartSec=5
