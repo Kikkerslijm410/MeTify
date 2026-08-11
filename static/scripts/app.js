@@ -7,6 +7,8 @@ const msg = $('#message');
 const selectAllEl = $('#select-all-files');
 const selectionCountEl = $('#selection-count');
 
+const render = (el, data, empty, fn) => el.innerHTML = data.length ? data.map(fn).join('') : empty;
+
 const api = async (url, opts={}) => {
     const r = await fetch(url, opts);
     if (!r.ok) throw new Error(await r.text());
@@ -130,14 +132,15 @@ async function createJob(e){
     }
 }
 
-const render = (el, data, empty, fn) => el.innerHTML = data.length ? data.map(fn).join('') : empty;
-
 function renderJobs(jobs){
     render(jobsEl, jobs, '<div class="item muted">No jobs.</div>', j => `
         <div class="item">
             <div class="item-head">
                 <strong>${j.id.slice(0,8)}</strong>
                 <span class="badge">${j.status}</span>
+                <button class="icon-btn" onclick="deleteJob('${j.id}')">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
             <div class="muted">${j.created_at || ''}</div>
             <div class="progress"><div class="bar" style="width:${j.progress||0}%"></div></div>
@@ -145,6 +148,26 @@ function renderJobs(jobs){
             <pre class="log">${(j.log||[]).join('\n')}</pre>
         </div>
     `);
+}
+
+async function deleteJob(id) {
+    await fetch(`/api/jobs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    refresh();
+}
+
+async function clearJobs() {
+    await fetch('/api/jobs', { method: 'DELETE' });
+    refresh();
+}
+
+async function downloadJobs() {
+    const jobs = await api('/api/jobs');
+    const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'jobs.json' });
+    a.click();
+    URL.revokeObjectURL(url);
+    refresh();
 }
 
 function renderFiles(files) {
@@ -269,12 +292,6 @@ btn.onclick = () => {
     applyTheme();
 };
 
-initSelects();
-$('#downloadForm').onsubmit = createJob;
-
-refresh();
-applyTheme();
-
 async function downloadFile(filename) {
     return downloadFiles([filename]);
 }
@@ -324,3 +341,8 @@ async function deleteSelectedFiles() {
     refresh();
 }
 
+initSelects();
+$('#downloadForm').onsubmit = createJob;
+
+refresh();
+applyTheme();

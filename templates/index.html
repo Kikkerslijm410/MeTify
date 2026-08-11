@@ -86,7 +86,18 @@
 
         <section class="columns">
             <div class="card">
-                <h2>Jobs</h2>
+                <div class="selection-bar">
+                    <h2>Jobs</h2>
+                    <div>
+                        <button onclick="downloadJobs()">
+                            <i class="fa-solid fa-download"></i> Download jobs file
+                        </button>
+                        <button class="danger" onclick="clearJobs()">
+                            <i class="fa-solid fa-trash-can"></i> Delete completed jobs
+                        </button>
+                    </div>
+                </div>
+
                 <div id="jobs" class="list"></div>
             </div>
             <div class="card">
