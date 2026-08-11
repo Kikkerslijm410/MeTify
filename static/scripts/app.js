@@ -18,10 +18,7 @@ const api = async (url, opts={}) => {
 const bytes = n => `${(n / 1024 ** 2).toFixed(1)} MB`;
 const selectedValues = (form, name) => [...form[name].selectedOptions].map(o => o.value);
 
-// Multi-select enhancement
 function initSelects() {
-    const closeAll = () => document.querySelectorAll('.multi-select.open').forEach(d => d.classList.remove('open'));
-
     document.querySelectorAll('.js-multi-select, .js-single-select').forEach(select => {
         if (select.dataset.enhanced) return;
         select.dataset.enhanced = true;
@@ -58,9 +55,8 @@ function initSelects() {
 
                 const sync = () => {
                     row.classList.toggle('selected', opt.selected);
-                    checkbox.textContent = opt.selected ? '✔' : '';
+                    checkbox.innerHTML = opt.selected ? '<i class="fa-solid fa-check"></i>' : '';
                 };
-
                 row.append(checkbox, label);
 
                 row.onclick = () => {
@@ -95,7 +91,7 @@ function initSelects() {
 
         btn.onclick = () => {
             const isOpen = wrap.classList.contains('open');
-            closeAll();
+            closeAllSelects();
             if (!isOpen) wrap.classList.add('open');
         };
 
@@ -104,6 +100,14 @@ function initSelects() {
         update();
     });
 }
+
+const closeAllSelects = () =>
+    document.querySelectorAll('.multi-select.open').forEach(d => d.classList.remove('open'));
+document.addEventListener('click', e => {
+    if (!e.target.closest('.multi-select')) {
+        closeAllSelects();
+    }
+});
 
 async function createJob(e){
     e.preventDefault();
@@ -200,8 +204,6 @@ function renderFiles(files) {
                             <div class="song-title">${title}</div>
                         </div>
                     ` : ''}
-
-
                 <div class="song-files">
                     ${sorted.map(f => `
                         <div class="song-file">
@@ -215,7 +217,7 @@ function renderFiles(files) {
 
                             <div class="song-file-info">
                                 <div class="song-file-name">${isGrouped ? f.name : title}</div>
-                                <div class="muted">${bytes(f.size)} • ${f.bitrate} • ${f.modified}</div>
+                                <div class="muted">${bytes(f.size)} • ${f.modified}</div>
                             </div>
                         </div>
                     `).join('')}
@@ -246,7 +248,7 @@ function syncSelectionState() {
     selectAllEl.checked = allFileCbs.length > 0 && allChecked === allFileCbs.length;
     selectAllEl.indeterminate = allChecked > 0 && allChecked < allFileCbs.length;
 
-    selectionCountEl.textContent = `${allChecked} geselecteerd`;
+    selectionCountEl.textContent = `${allChecked} Selected`;
 
     const hasSelection = allChecked > 0;
     $$('.selection-bar .actions button').forEach(b => b.disabled = !hasSelection);
