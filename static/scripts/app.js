@@ -195,32 +195,37 @@ function renderFiles(files) {
 
         // Single files (like just an mp3 or just an lrc) are displayed without a group header
         const isGrouped = sorted.length > 1;
-            return `
-                <div class="song-group${isGrouped ? ' grouped' : ''}" data-group="${title}">
-                    ${isGrouped ? `
-                        <div class="song-group-header">
-                            <input type="checkbox" class="group-checkbox">
-                            <i class="fa-solid fa-folder"></i>
-                            <div class="song-title">${title}</div>
-                        </div>
-                    ` : ''}
+        const safeTitle = escapeHtml(title);
+
+        return `
+            <div class="song-group${isGrouped ? ' grouped' : ''}" data-group="${safeTitle}">
+                ${isGrouped ? `
+                    <div class="song-group-header">
+                        <input type="checkbox" class="group-checkbox">
+                        <i class="fa-solid fa-folder"></i>
+                        <div class="song-title">${safeTitle}</div>
+                    </div>
+                ` : ''}
                 <div class="song-files">
-                    ${sorted.map(f => `
-                        <div class="song-file">
-                            <input type="checkbox" class="file-checkbox" value="${f.name}">
+                    ${sorted.map(f => {
+                        const safeName = escapeHtml(f.name);
+                        return `
+                            <div class="song-file">
+                                <input type="checkbox" class="file-checkbox" value="${safeName}">
 
-                            <div class="song-file-icon">
-                                ${f.name.toLowerCase().endsWith('.lrc')
-                                    ? '<i class="fa-solid fa-file-lines"></i>'
-                                    : '<i class="fa-solid fa-music"></i>'}
-                            </div>
+                                <div class="song-file-icon">
+                                    ${f.name.toLowerCase().endsWith('.lrc')
+                                        ? '<i class="fa-solid fa-file-lines"></i>'
+                                        : '<i class="fa-solid fa-music"></i>'}
+                                </div>
 
-                            <div class="song-file-info">
-                                <div class="song-file-name">${isGrouped ? f.name : title}</div>
-                                <div class="muted">${bytes(f.size)} • ${f.modified}</div>
+                                <div class="song-file-info">
+                                    <div class="song-file-name">${isGrouped ? safeName : safeTitle}</div>
+                                    <div class="muted">${bytes(f.size)} • ${f.modified}</div>
+                                </div>
                             </div>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -229,6 +234,13 @@ function renderFiles(files) {
     filesEl.innerHTML = html || '<div class="item muted">No files.</div>';
     syncSelectionState();
 }
+
+const escapeHtml = str => String(str)
+ .replace(/&/g, '&amp;')
+ .replace(/</g, '&lt;')
+ .replace(/>/g, '&gt;')
+ .replace(/"/g, '&quot;')
+ .replace(/'/g, '&#39;');
 
 function syncSelectionState() {
     $$('.song-group').forEach(group => {
@@ -274,7 +286,7 @@ async function refresh() {
     const files = await api('/api/downloads');
     renderFiles(files);
 
-    if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'running')) {
+    if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'Running')) {
         setTimeout(refresh, 5000);
     }
 }

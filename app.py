@@ -193,7 +193,7 @@ def delete_job(job_id):
 @app.delete("/api/jobs")
 def clear_jobs():
     with jobs_lock:
-        keep = {jid: j for jid, j in jobs.items() if j["status"] in ("Queued", "Running")}
+        keep = {jid: j for jid, j in jobs.items() if j.get("status") in ("Queued", "Running")}
         jobs.clear()
         jobs.update(keep)
         save_jobs()
@@ -250,8 +250,8 @@ def delete_file(filename):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    jobs = load_jobs()
-    jobs_lock = threading.Lock()
+jobs = load_jobs()
+jobs_lock = threading.Lock()
 
+if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, threaded=True)
