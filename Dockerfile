@@ -5,13 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN apk update && \
     apk upgrade && \
-    apk add --no-cache ffmpeg && \
+    apk add --no-cache ffmpeg curl unzip && \
     pip install --no-cache-dir --upgrade pip==26.1.2 setuptools wheel
 
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    spotdl --download-deno
 
 COPY app.py .
 COPY wsgi.py .
