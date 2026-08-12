@@ -144,9 +144,10 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=/opt/metify
-ExecStart=/opt/metify/.venv/bin/python3 /opt/metify/app.py
+ExecStart=/opt/metify/.venv/bin/gunicorn --bind 0.0.0.0:5000 --workers 1 --threads 8 --timeout 0 wsgi:app
 Restart=always
 RestartSec=5
+Environment=PORT=5000
 
 [Install]
 WantedBy=multi-user.target
