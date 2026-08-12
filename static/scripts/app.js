@@ -4,6 +4,10 @@ const $$ = s => [...document.querySelectorAll(s)];
 const jobsEl = $('#jobs');
 const filesEl = $('#files');
 const msg = $('#message');
+const selectAllEl = $('#select-all-files');
+const selectionCountEl = $('#selection-count');
+
+const render = (el, data, empty, fn) => el.innerHTML = data.length ? data.map(fn).join('') : empty;
 
 const api = async (url, opts={}) => {
     const r = await fetch(url, opts);
@@ -14,10 +18,7 @@ const api = async (url, opts={}) => {
 const bytes = n => `${(n / 1024 ** 2).toFixed(1)} MB`;
 const selectedValues = (form, name) => [...form[name].selectedOptions].map(o => o.value);
 
-// Multi-select enhancement
 function initSelects() {
-    const closeAll = () => document.querySelectorAll('.multi-select.open').forEach(d => d.classList.remove('open'));
-
     document.querySelectorAll('.js-multi-select, .js-single-select').forEach(select => {
         if (select.dataset.enhanced) return;
         select.dataset.enhanced = true;
@@ -54,12 +55,11 @@ function initSelects() {
 
                 const sync = () => {
                     row.classList.toggle('selected', opt.selected);
-                    checkbox.textContent = opt.selected ? '✔' : '';
+                    checkbox.innerHTML = opt.selected ? '<i class="fa-solid fa-check"></i>' : '';
                 };
-
                 row.append(checkbox, label);
 
-                row.onclick = e => {
+                row.onclick = () => {
                     opt.selected = !opt.selected;
                     sync();
                     update();
@@ -72,7 +72,7 @@ function initSelects() {
 
                 if (opt.selected) row.classList.add('selected');
 
-                row.onclick = e => {
+                row.onclick = () => {
                     [...select.options].forEach(o => o.selected = false);
                     opt.selected = true;
 
@@ -89,9 +89,9 @@ function initSelects() {
             menu.appendChild(row);
         });
 
-        btn.onclick = e => {
+        btn.onclick = () => {
             const isOpen = wrap.classList.contains('open');
-            closeAll();
+            closeAllSelects();
             if (!isOpen) wrap.classList.add('open');
         };
 
@@ -100,6 +100,14 @@ function initSelects() {
         update();
     });
 }
+
+const closeAllSelects = () =>
+    document.querySelectorAll('.multi-select.open').forEach(d => d.classList.remove('open'));
+document.addEventListener('click', e => {
+    if (!e.target.closest('.multi-select')) {
+        closeAllSelects();
+    }
+});
 
 async function createJob(e){
     e.preventDefault();
@@ -128,14 +136,15 @@ async function createJob(e){
     }
 }
 
-const render = (el, data, empty, fn) => el.innerHTML = data.length ? data.map(fn).join('') : empty;
-
 function renderJobs(jobs){
     render(jobsEl, jobs, '<div class="item muted">No jobs.</div>', j => `
         <div class="item">
             <div class="item-head">
                 <strong>${j.id.slice(0,8)}</strong>
                 <span class="badge">${j.status}</span>
+                <button class="icon-btn" onclick="deleteJob('${j.id}')">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
             </div>
             <div class="muted">${j.created_at || ''}</div>
             <div class="progress"><div class="bar" style="width:${j.progress||0}%"></div></div>
@@ -145,47 +154,130 @@ function renderJobs(jobs){
     `);
 }
 
-function renderFiles(files){
-    render(filesEl, files, '<div class="item muted">No files.</div>', f => `
-        <div class="item">
-            <div class="item-head">
-                <div style="display:flex;justify-content:space-between;width:100%">
-                    <div>
-                        <strong>${f.name}</strong>
-                        <div class="muted">${bytes(f.size)} • ${f.modified}</div>
-                    </div>
-                    <div class="actions">
-                        <button class="icon-btn" onclick="downloadFile('${f.name}')" title="Download">
-                            <i class="fa-solid fa-download" style="color: #22c55e;"></i>
-                        </button>
-                        <button class="icon-btn" onclick="deleteFile('${f.name}')" title="Delete">
-                            <i class="fa-solid fa-trash-can" style="color: #ef4444;"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `);
+async function deleteJob(id) {
+    await fetch(`/api/jobs/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    refresh();
 }
 
-const downloadFile = filename =>
-    fetch('/api/download', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ filename })
-    })
-    .then(r => r.blob())
-    .then(b => {
-        const url = URL.createObjectURL(b);
-        const a = Object.assign(document.createElement('a'), {href:url, download:filename});
-        a.click();
-        URL.revokeObjectURL(url);
+async function clearJobs() {
+    await fetch('/api/jobs', { method: 'DELETE' });
+    refresh();
+}
+
+async function downloadJobs() {
+    const jobs = await api('/api/jobs');
+    const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'jobs.json' });
+    a.click();
+    URL.revokeObjectURL(url);
+    refresh();
+}
+
+function renderFiles(files) {
+    const groups = {};
+
+    files.forEach(file => {
+        const baseName = file.name.replace(/\.(mp3|flac|m4a|wav|lrc)$/i, '');
+        if (!groups[baseName]) groups[baseName] = [];
+        groups[baseName].push(file);
     });
 
-const deleteFile = async name => {
-    await fetch(`/api/downloads/${name}`, {method:'DELETE'});
-    refresh();
-};
+    const html = Object.entries(groups).map(([title, groupFiles]) => {
+
+        const sorted = groupFiles.sort((a, b) => {
+            const aIsLrc = a.name.toLowerCase().endsWith('.lrc');
+            const bIsLrc = b.name.toLowerCase().endsWith('.lrc');
+            if (aIsLrc && !bIsLrc) return 1;
+            if (!aIsLrc && bIsLrc) return -1;
+            return 0;
+        });
+
+        // Single files (like just an mp3 or just an lrc) are displayed without a group header
+        const isGrouped = sorted.length > 1;
+        const safeTitle = escapeHtml(title);
+
+        return `
+            <div class="song-group${isGrouped ? ' grouped' : ''}" data-group="${safeTitle}">
+                ${isGrouped ? `
+                    <div class="song-group-header">
+                        <input type="checkbox" class="group-checkbox">
+                        <i class="fa-solid fa-folder"></i>
+                        <div class="song-title">${safeTitle}</div>
+                    </div>
+                ` : ''}
+                <div class="song-files">
+                    ${sorted.map(f => {
+                        const safeName = escapeHtml(f.name);
+                        return `
+                            <div class="song-file">
+                                <input type="checkbox" class="file-checkbox" value="${safeName}">
+
+                                <div class="song-file-icon">
+                                    ${f.name.toLowerCase().endsWith('.lrc')
+                                        ? '<i class="fa-solid fa-file-lines"></i>'
+                                        : '<i class="fa-solid fa-music"></i>'}
+                                </div>
+
+                                <div class="song-file-info">
+                                    <div class="song-file-name">${isGrouped ? safeName : safeTitle}</div>
+                                    <div class="muted">${bytes(f.size)} • ${f.modified}</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    filesEl.innerHTML = html || '<div class="item muted">No files.</div>';
+    syncSelectionState();
+}
+
+const escapeHtml = str => String(str)
+ .replace(/&/g, '&amp;')
+ .replace(/</g, '&lt;')
+ .replace(/>/g, '&gt;')
+ .replace(/"/g, '&quot;')
+ .replace(/'/g, '&#39;');
+
+function syncSelectionState() {
+    $$('.song-group').forEach(group => {
+        const groupCb = group.querySelector('.group-checkbox');
+        if (!groupCb) return;
+
+        const fileCbs = [...group.querySelectorAll('.file-checkbox')];
+        const checkedCount = fileCbs.filter(cb => cb.checked).length;
+
+        groupCb.checked = checkedCount === fileCbs.length;
+        groupCb.indeterminate = checkedCount > 0 && checkedCount < fileCbs.length;
+    });
+
+    const allFileCbs = $$('.file-checkbox');
+    const allChecked = allFileCbs.filter(cb => cb.checked).length;
+
+    selectAllEl.checked = allFileCbs.length > 0 && allChecked === allFileCbs.length;
+    selectAllEl.indeterminate = allChecked > 0 && allChecked < allFileCbs.length;
+
+    selectionCountEl.textContent = `${allChecked} Selected`;
+
+    const hasSelection = allChecked > 0;
+    $$('.selection-bar .actions button').forEach(b => b.disabled = !hasSelection);
+}
+
+filesEl.addEventListener('change', e => {
+    if (e.target.classList.contains('group-checkbox')) {
+        const group = e.target.closest('.song-group');
+        group.querySelectorAll('.file-checkbox').forEach(cb => cb.checked = e.target.checked);
+    }
+    syncSelectionState();
+});
+
+selectAllEl.addEventListener('change', () => {
+    $$('.file-checkbox').forEach(cb => cb.checked = selectAllEl.checked);
+    syncSelectionState();
+});
 
 async function refresh() {
     const jobs = await api('/api/jobs');
@@ -194,9 +286,7 @@ async function refresh() {
     const files = await api('/api/downloads');
     renderFiles(files);
 
-    if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'running')) {
-        const files = await api('/api/downloads');
-        renderFiles(files);
+    if ([...document.querySelectorAll('.badge')].some(b => b.textContent.trim() === 'Running')) {
         setTimeout(refresh, 5000);
     }
 }
@@ -215,6 +305,55 @@ btn.onclick = () => {
     localStorage.setItem('theme', light ? 'light' : 'dark');
     applyTheme();
 };
+
+async function downloadFile(filename) {
+    return downloadFiles([filename]);
+}
+
+async function downloadFiles(filenames) {
+    const res = await fetch('/api/download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filenames })
+    });
+
+    if (!res.ok) {
+        msg.textContent = `Fout bij downloaden: ${await res.text()}`;
+        return;
+    }
+
+    const blob = await res.blob();
+    const isZip = filenames.length > 1;
+    const downloadName = isZip ? 'MeTify.zip' : filenames[0];
+
+    const url = URL.createObjectURL(blob);
+    const a = Object.assign(document.createElement('a'), { href: url, download: downloadName });
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+async function downloadSelectedFiles() {
+    const files = $$('.file-checkbox:checked').map(cb => cb.value);
+    if (!files.length) return;
+    downloadFiles(files);
+}
+
+async function deleteFile(name) {
+    await fetch(`/api/downloads/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    refresh();
+}
+
+async function deleteSelectedFiles() {
+    const files = $$('.file-checkbox:checked').map(cb => cb.value);
+
+    await Promise.all(
+        files.map(name =>
+            fetch(`/api/downloads/${encodeURIComponent(name)}`, { method: 'DELETE' })
+        )
+    );
+
+    refresh();
+}
 
 initSelects();
 $('#downloadForm').onsubmit = createJob;

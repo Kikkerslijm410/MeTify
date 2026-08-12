@@ -86,11 +86,37 @@
 
         <section class="columns">
             <div class="card">
-                <h2>Jobs</h2>
+                <div class="selection-bar">
+                    <h2>Jobs</h2>
+                    <div>
+                        <button onclick="downloadJobs()">
+                            <i class="fa-solid fa-download"></i> Download jobs file
+                        </button>
+                        <button class="danger" onclick="clearJobs()">
+                            <i class="fa-solid fa-trash-can"></i> Delete completed jobs
+                        </button>
+                    </div>
+                </div>
+
                 <div id="jobs" class="list"></div>
             </div>
             <div class="card">
                 <h2>Downloaded files</h2>
+                <div class="selection-bar">
+                    <label>
+                        <input type="checkbox" id="select-all-files">
+                        Select all
+                    </label>
+                    <span id="selection-count" class="muted">0 selected</span>
+                    <div class="actions">
+                        <button onclick="downloadSelectedFiles()">
+                            <i class="fa-solid fa-download"></i> Download selected
+                        </button>
+                        <button class="danger" onclick="deleteSelectedFiles()">
+                            <i class="fa-solid fa-trash-can"></i> Delete selected
+                        </button>
+                    </div>
+                </div>
                 <div id="files" class="list"></div>
             </div>
         </section>

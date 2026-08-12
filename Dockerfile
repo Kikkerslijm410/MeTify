@@ -1,10 +1,12 @@
 FROM python:alpine
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    DOWNLOAD_DIR=/downloads
+    PYTHONUNBUFFERED=1
 
-RUN apk add --no-cache ffmpeg && apk upgrade --no-cache
+RUN apk update && \
+    apk upgrade && \
+    apk add --no-cache ffmpeg && \
+    pip install --no-cache-dir --upgrade pip==26.1.2 setuptools wheel
 
 WORKDIR /app
 
@@ -14,8 +16,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 COPY templates ./templates
 COPY static ./static
-
-RUN mkdir -p /downloads
 
 EXPOSE 5000
 CMD ["python", "app.py"]
