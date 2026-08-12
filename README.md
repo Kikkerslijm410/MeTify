@@ -29,7 +29,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/Kikkerslijm410/MeTify/re
 
 ### 2. Update
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/Kikkerslijm410/MeTify/refs/heads/11-proxmox-update-script/installers/proxmox-update.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Kikkerslijm410/MeTify/refs/heads/main/installers/proxmox-update.sh)"
 ```
 
 ---
