@@ -84,6 +84,7 @@ body {
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
+  gap: 8px;
 }
 
 .github-link {
