@@ -80,6 +80,10 @@ fi
 
 if ! pct exec "$CTID" -- test -d /opt/metify; then
     echo -e "${RED}/opt/metify not found in container $CTID. Is MeTify installed here?${NC}"
+    if [[ "$WAS_STOPPED" -eq 1 ]]; then
+        echo -e "${YELLOW}Stopping container again (it was stopped before the update)...${NC}"
+        pct stop "$CTID"
+    fi
     exit 1
 fi
 
