@@ -267,7 +267,7 @@ async function checkForUpdates() {
                     Object.fromEntries(Object.entries(res.results).map(([pkg, r]) => [pkg, r.current]))
                 );
             }
-            versionBtn.disabled = false;
+            versionCheck.disabled = false;
         }
     } catch {
         versionCheck.innerHTML = '<span class="updated"><i class="fa-solid fa-circle-notch fa-spin"></i> Reconnecting...</span>';
