@@ -298,6 +298,49 @@ select.multi-select-source {
   gap: 12px;
 }
 
+.list,
+.log {
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--bg);
+}
+
+.list::-webkit-scrollbar,
+.log::-webkit-scrollbar {
+  width: 8px;
+}
+
+.list::-webkit-scrollbar-track,
+.log::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 999px;
+}
+
+.list::-webkit-scrollbar-thumb,
+.log::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg);
+}
+
+.list::-webkit-scrollbar-thumb:hover,
+.log::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+.list::-webkit-scrollbar-button,
+.log::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.list > .song-group {
+  flex-shrink: 0;
+}
+
 .item {
   border: 1px solid var(--border);
   border-radius: 14px;
