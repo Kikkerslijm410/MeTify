@@ -43,6 +43,7 @@ def check_and_update(packages=PACKAGES):
         if entry["current"] and entry["latest"] and entry["current"] != entry["latest"]:
             try:
                 upgrade(package)
+                entry["current"] = installed_version(package) or entry["latest"]
                 entry["updated"] = True
                 any_updated = True
             except subprocess.CalledProcessError as exc:
