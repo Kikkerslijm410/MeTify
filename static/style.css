@@ -84,7 +84,7 @@ body {
   text-decoration: none;
   color: var(--text);
   font-weight: 600;
-  gap: 8px;
+  gap: 12px;
 }
 
 .github-link {
@@ -102,6 +102,19 @@ body {
 
 .github-link:hover {
   background: var(--accent-bg);
+}
+
+.version-badge {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.version-badge .updated {
+  color: var(--accent);
+}
+
+.version-badge .error {
+  color: var(--danger);
 }
 
 .card {

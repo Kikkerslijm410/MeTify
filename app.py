@@ -2,6 +2,7 @@ import os, uuid, time, threading, subprocess, sys, io, zipfile, json
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_from_directory, abort, send_file
+from static.scripts.auto_update import start_auto_update, check_and_update, PACKAGES, installed_version
 
 app = Flask(__name__)
 
@@ -35,6 +36,10 @@ def save_jobs():
     tmp = JOBS_FILE.with_suffix(".tmp")
     tmp.write_text(json.dumps(jobs, indent=2))
     tmp.replace(JOBS_FILE)
+
+def any_job_running():
+    with jobs_lock:
+        return any(j.get("status") in ("Queued", "Running") for j in jobs.values())
 
 def list_downloads():
     items = []
@@ -249,8 +254,31 @@ def delete_file(filename):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.get("/api/versions")
+def get_versions():
+    versions = {}
+    for package in PACKAGES:
+        versions[package] = installed_version(package)
+    return jsonify(versions)
+
+@app.post("/api/update/check")
+def force_update_check():
+    results, any_updated = check_and_update()
+
+    if any_updated:
+        def wait_then_restart():
+            while any_job_running():
+                time.sleep(600)
+            time.sleep(2)
+            os._exit(0)
+
+        threading.Thread(target=wait_then_restart, daemon=True).start()
+
+    return jsonify({"results": results, "restarting": any_updated})
+
 jobs = load_jobs()
 jobs_lock = threading.Lock()
+start_auto_update(any_job_running)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, threaded=True)
