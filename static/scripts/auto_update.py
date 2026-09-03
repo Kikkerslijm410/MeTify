@@ -35,7 +35,7 @@ def check_and_update(packages=PACKAGES):
         try:
             entry["current"] = installed_version(package)
             entry["latest"] = latest_version(package)
-        except subprocess.CalledProcessError as exc:
+        except Exception as exc:
             entry["error"] = f"Version check failed: {exc}"
             results[package] = entry
             continue
