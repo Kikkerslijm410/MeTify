@@ -2,7 +2,7 @@ import os, uuid, time, threading, subprocess, sys, io, zipfile, json
 from pathlib import Path
 from datetime import datetime
 from flask import Flask, request, jsonify, render_template, send_from_directory, abort, send_file
-from static.scripts.auto_update import start_auto_update, check_and_update, PACKAGES, installed_version
+from auto_update import start_auto_update, check_and_update, PACKAGES, installed_version
 
 app = Flask(__name__)
 

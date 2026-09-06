@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     spotdl --download-deno
 
 COPY app.py .
+COPY auto_update.py .
 COPY wsgi.py .
 COPY templates ./templates
 COPY static ./static
