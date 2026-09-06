@@ -99,6 +99,9 @@ function initSelects() {
         select.after(wrap);
         update();
     });
+
+    versionCheck.onclick = checkForUpdates;
+    loadVersions();
 }
 
 const closeAllSelects = () =>
@@ -233,6 +236,58 @@ function renderFiles(files) {
 
     filesEl.innerHTML = html || '<div class="item muted">No files.</div>';
     syncSelectionState();
+}
+
+const versionCheck = $('#version-check');
+
+function formatVersions(versions) {
+    return Object.entries(versions).map(([pkg, v]) => `${pkg} ${v || '?'}`).join(' • ');
+}
+
+async function loadVersions() {
+    versionCheck.textContent = formatVersions(await api('/api/versions'));
+}
+
+async function checkForUpdates() {
+    versionCheck.disabled = true;
+    versionCheck.innerHTML = '<i class="fa-solid fa-rotate fa-spin"></i> Checking...';
+
+    try {
+        const res = await api('/api/update/check', { method: 'POST' });
+
+        if (res.restarting) {
+            versionCheck.innerHTML = '<span class="updated"><i class="fa-solid fa-check"></i> Update found, restarting...</span>';
+            waitForServerRestart();
+        } else {
+            const hasError = Object.values(res.results).some(r => r.error);
+            if (hasError) {
+                versionCheck.innerHTML = '<span class="error"><i class="fa-solid fa-triangle-exclamation"></i> Check failed</span>';
+            } else {
+                versionCheck.textContent = formatVersions(
+                    Object.fromEntries(Object.entries(res.results).map(([pkg, r]) => [pkg, r.current]))
+                );
+            }
+            versionCheck.disabled = false;
+        }
+    } catch {
+        versionCheck.innerHTML = '<span class="updated"><i class="fa-solid fa-circle-notch fa-spin"></i> Reconnecting...</span>';
+        waitForServerRestart();
+    }
+}
+
+async function waitForServerRestart() {
+    for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 2000));
+        try {
+            await api('/api/versions');
+            location.reload();
+            return;
+        } catch {
+            // Server still restarting, keep waiting.
+        }
+    }
+    versionCheck.innerHTML = '<span class="error"><i class="fa-solid fa-triangle-exclamation"></i> Server did not come back</span>';
+    versionCheck.disabled = false;
 }
 
 const escapeHtml = str => String(str)
